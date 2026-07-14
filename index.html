@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fatoração - Série de Exercícios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
+        }
+        body {
+            background: #e8edf2;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 35px 35px 25px;
+            border-top: 6px solid #007b9e;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 26px;
+            color: #1c2a36;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e6ed;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f5f8fa;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .progress-bar {
+            width: 70%;
+            height: 10px;
+            background: #e0e6ed;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #2e7d32;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            font-weight: 600;
+            color: #1a2a3a;
+        }
+
+        .activity-block {
+            background: #fafcff;
+            border: 1px solid #dde3e9;
+            border-radius: 10px;
+            padding: 25px 28px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .activity-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0b2a41;
+            margin-bottom: 4px;
+        }
+
+        .instruction {
+            font-size: 16px;
+            color: #3d5166;
+            margin-bottom: 15px;
+            font-style: italic;
+            border-left: 4px solid #f9a825;
+            padding-left: 14px;
+            background: #fffde7;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 0;
+            background: #b0b8c0;
+            border: 3px solid #4a5b6b;
+            border-radius: 4px;
+            width: fit-content;
+            margin: 15px auto;
+        }
+
+        .grid-cell {
+            width: 120px;
+            height: 120px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 26px;
+            border: 1px solid #a0aab4;
+        }
+
+        .grid-cell .x2 {
+            background: #1565c0;
+            color: #fff;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        .grid-cell .const {
+            background: #2e7d32;
+            color: #fff;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        .grid-cell .const-neg {
+            background: #b71c1c;
+            color: #fff;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border: 3px dashed #ffcdd2;
+        }
+        .grid-cell .lin {
+            background: #f9a825;
+            color: #1a2a3a;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        .grid-cell .lin-neg {
+            background: #c62828;
+            color: #fff;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border: 3px dashed #ffcdd2;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 18px 0 10px 0;
+            background: #f5f7fa;
+            padding: 18px;
+            border-radius: 8px;
+        }
+        .input-field {
+            flex: 1 1 200px;
+        }
+        .input-field label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2d3b45;
+            margin-bottom: 4px;
+        }
+        .input-field input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #cdd5de;
+            border-radius: 6px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            background: white;
+            transition: 0.2s;
+        }
+        .input-field input:focus {
+            border-color: #007b9e;
+            box-shadow: 0 0 0 3px rgba(0, 123, 158, 0.15);
+        }
+        .input-field input:disabled {
+            background: #eef2f5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 10px 0 5px 0;
+        }
+
+        .btn {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #e9edf4;
+            color: #1a2a3a;
+        }
+        .btn-success { background: #2e7d32; color: #fff; }
+        .btn-success:hover:not(:disabled) { background: #1b5e20; }
+        .btn-danger { background: #c62828; color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #8e0000; }
+        .btn-warning { background: #f9a825; color: #1a2a3a; }
+        .btn-warning:hover:not(:disabled) { background: #f57f17; }
+        .btn-video { background: #6a1b9a; color: #fff; }
+        .btn-video:hover:not(:disabled) { background: #4a148c; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .feedback-box {
+            margin-top: 18px;
+            padding: 14px 18px;
+            border-radius: 6px;
+            border-left: 6px solid transparent;
+            display: none;
+            font-weight: 500;
+            background: #f5f8fa;
+        }
+        .feedback-box.show { display: block; }
+        .feedback-box.success {
+            background: #e8f5e9;
+            border-left-color: #2e7d32;
+            color: #1e4620;
+        }
+        .feedback-box.error {
+            background: #fbeaea;
+            border-left-color: #c62828;
+            color: #5f1a1a;
+        }
+        .feedback-box.info {
+            background: #e3f2fd;
+            border-left-color: #007b9e;
+            color: #0d3a4f;
+        }
+
+        .video-section {
+            margin-top: 20px;
+            padding: 18px;
+            background: #f5f8fa;
+            border-radius: 8px;
+            border: 1px solid #d0d7dd;
+            display: none;
+        }
+        .video-section.show { display: block; }
+        .video-section h3 {
+            font-size: 16px;
+            color: #1c2a36;
+            margin-bottom: 12px;
+        }
+        .video-container {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .video-container video {
+            width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+        .video-placeholder {
+            background: #e0e6ed;
+            padding: 30px;
+            border-radius: 8px;
+            color: #5e6f7d;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .copyright {
+            text-align: center;
+            font-weight: 600;
+            color: #1a2a3a;
+            padding: 18px 0 6px;
+            border-top: 1px solid #dee5ed;
+            margin-top: 20px;
+            font-size: 15px;
+        }
+
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .custom-modal.show { display: flex; }
+        .modal-content {
+            background: #fff;
+            padding: 30px 35px;
+            border-radius: 12px;
+            max-width: 420px;
+            width: 90%;
+            border-top: 6px solid #007b9e;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: fadeModal 0.2s ease;
+        }
+        @keyframes fadeModal {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-content h3 {
+            margin-bottom: 10px;
+            color: #1a2a3a;
+            font-size: 20px;
+        }
+        .modal-content p {
+            color: #4a5b6b;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+        .modal-btn {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 30px;
+            background: #007b9e;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-btn:hover { background: #005f7a; }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 10px 0 8px 0;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧩 Fatoração – Série de Exercícios</h1>
+    <div class="subtitle" style="color:#3d5166; margin-bottom:20px;">
+        Observe a figura geométrica. Escreva a <strong>expressão expandida</strong> (soma das áreas) e a <strong>forma fatorada</strong> (produto).
+    </div>
+
+    <div class="progress-info">
+        <span class="progress-text">Progresso: <span id="doneCount">0</span>/10</span>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width:0%;"></div>
+        </div>
+    </div>
+
+    <div id="exercises-container"></div>
+
+    <div class="copyright">© Rogério Joaquim Santana – Laboratório Interativo de Matemática</div>
+</div>
+
+<!-- MODAL -->
+<div class="custom-modal" id="customModal">
+    <div class="modal-content">
+        <h3 id="modalTitle">️ Atenção</h3>
+        <p id="modalMessage">Mensagem personalizada.</p>
+        <button class="modal-btn" onclick="closeModal()">OK</button>
+    </div>
+</div>
+
+<script>
+    // ======================================================
+    // CONFIGURAÇÃO SUPABASE
+    // ======================================================
+    const SUPABASE_URL = 'https://qmcqffnawtfaenyziwsn.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtY3FmZm5hd3RmYWVueXppd3NuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNTM5NTMsImV4cCI6MjA4OTcyOTk1M30._CjaNoeJeQp-8s8Jt-dk3bJfktdEV97R5LhLnWgYrNc';
+    
+    const ALUNO_ID = new URLSearchParams(window.location.search).get('aluno_id');
+    const JOGO_ID = new URLSearchParams(window.location.search).get('jogo_id');
+    const TURMA_ID = new URLSearchParams(window.location.search).get('turma_id');
+    const HABILIDADE_BNCC = new URLSearchParams(window.location.search).get('bncc') || 'EF07MA18';
+
+    // ======================================================
+    // URL BASE DOS VÍDEOS (GitHub Raw)
+    // ======================================================
+    const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/profrogeriojoaquim-png/equacoes_respostas_01/main/videos/';
+    
+    // Mapeamento dos vídeos por questão
+    const VIDEOS_POR_QUESTAO = {
+        'ex1': GITHUB_RAW_BASE + 'fatoracao_q1.mp4',
+        'ex2': GITHUB_RAW_BASE + 'fatoracao_q2.mp4',
+        'ex3': GITHUB_RAW_BASE + 'fatoracao_q3.mp4',
+        'ex4': GITHUB_RAW_BASE + 'fatoracao_q4.mp4',
+        'ex5': GITHUB_RAW_BASE + 'fatoracao_q5.mp4',
+        'ex6': GITHUB_RAW_BASE + 'fatoracao_q6.mp4',
+        'ex7': GITHUB_RAW_BASE + 'fatoracao_q7.mp4',
+        'ex8': GITHUB_RAW_BASE + 'fatoracao_q8.mp4',
+        'ex9': GITHUB_RAW_BASE + 'fatoracao_q9.mp4',
+        'ex10': GITHUB_RAW_BASE + 'fatoracao_q10.mp4'
+    };
+
+    // ======================================================
+    // SISTEMA DE ÁUDIO
+    // ======================================================
+    let audioCtx = null;
+
+    function getAudio() {
+        if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+    }
+
+    function playTone(freq, dur, type = 'sine', vol = 0.2) {
+        try {
+            const ctx = getAudio();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.value = vol;
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + dur);
+        } catch (_) {}
+    }
+
+    function playCorrect() { 
+        playTone(523, 0.1);
+        setTimeout(() => playTone(659, 0.1), 120);
+        setTimeout(() => playTone(784, 0.15), 240); 
+    }
+
+    function playWrong() { 
+        playTone(280, 0.3, 'sawtooth', 0.15); 
+    }
+    
+    function playClick() { 
+        playTone(880, 0.05, 'sine', 0.1); 
+    }
+
+    // ======================================================
+    // MODAL
+    // ======================================================
+    function showModal(title, msg) {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').textContent = msg;
+        document.getElementById('customModal').classList.add('show');
+        playWrong();
+    }
+
+    function closeModal() {
+        document.getElementById('customModal').classList.remove('show');
+    }
+    document.getElementById('customModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ======================================================
+    // DADOS DOS EXERCÍCIOS (10 questões)
+    // ======================================================
+    const exercises = [
+        { a: 3, b: 12, id: 'ex1' },
+        { a: 5, b: 2, id: 'ex2' },
+        { a: -2, b: 8, id: 'ex3' },
+        { a: 10, b: 4, id: 'ex4' },
+        { a: -5, b: -3, id: 'ex5' },
+        { a: 7, b: -4, id: 'ex6' },
+        { a: -6, b: 2, id: 'ex7' },
+        { a: 9, b: 1, id: 'ex8' },
+        { a: -6, b: -2, id: 'ex9' },
+        { a: 4, b: -7, id: 'ex10' }
+    ];
+
+    // ======================================================
+    // FUNÇÃO DE NORMALIZAÇÃO
+    // ======================================================
+    function normalize(str) {
+        return str.replace(/\s/g, '').replace(/\*/g, '').replace(/²/g, '^2').toLowerCase();
+    }
+
+    // ======================================================
+    // CONSTRUÇÃO DA GRADE PARA CADA EXERCÍCIO
+    // ======================================================
+    function buildExercise(ex, index) {
+        const a = ex.a;
+        const b = ex.b;
+        const S = a + b;
+        const P = a * b;
+
+        // Determina classes para cada peça
+        const x2Class = 'x2';
+        const lin1Class = (a >= 0) ? 'lin' : 'lin-neg';
+        const lin2Class = (b >= 0) ? 'lin' : 'lin-neg';
+        const constClass = (P >= 0) ? 'const' : 'const-neg';
+
+        const label1 = (a >= 0 ? '+' : '') + a + 'x';
+        const label2 = (b >= 0 ? '+' : '') + b + 'x';
+        const labelConst = (P >= 0 ? '+' : '') + P;
+
+        // Cria o HTML do exercício
+        const block = document.createElement('div');
+        block.className = 'activity-block';
+        block.id = ex.id;
+
+        block.innerHTML = `
+            <div class="activity-title">📐 Questão ${index+1}</div>
+            <div class="instruction">✏️ Escreva a expressão expandida e a forma fatorada representadas pela figura.</div>
+
+            <div class="grid-container" style="grid-template-columns: repeat(2, 120px); grid-template-rows: repeat(2, 120px);">
+                <div class="grid-cell"><span class="${x2Class}">x²</span></div>
+                <div class="grid-cell"><span class="${lin1Class}">${label1}</span></div>
+                <div class="grid-cell"><span class="${lin2Class}">${label2}</span></div>
+                <div class="grid-cell"><span class="${constClass}">${labelConst}</span></div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-field">
+                    <label>📝 Expressão expandida:</label>
+                    <input type="text" id="${ex.id}_exp" placeholder="Ex: x^2 + Sx + P">
+                </div>
+                <div class="input-field">
+                    <label>📝 Forma fatorada:</label>
+                    <input type="text" id="${ex.id}_fact" placeholder="Ex: (x+a)(x+b)">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="verifyEx('${ex.id}')">✅ Verificar</button>
+                <button class="btn btn-warning" onclick="showExHint('${ex.id}')">💡 Dica</button>
+                <button class="btn btn-video" onclick="showVideo('${ex.id}')">🎬 Ver Vídeo</button>
+                <button class="btn btn-danger" onclick="resetEx('${ex.id}')"> Refazer</button>
+            </div>
+            <div id="${ex.id}_feedback" class="feedback-box"></div>
+            
+            <div class="video-section" id="${ex.id}_videoSection">
+                <h3>🎬 Vídeo explicativo - Questão ${index+1}</h3>
+                <div class="video-container" id="${ex.id}_videoContainer">
+                    <video id="${ex.id}_video" controls preload="metadata" onerror="mostrarErroVideo('${ex.id}')">
+                        <source src="${VIDEOS_POR_QUESTAO[ex.id]}" type="video/mp4">
+                        Seu navegador não suporta a tag de vídeo.
+                    </video>
+                </div>
+            </div>
+        `;
+
+        return block;
+    }
+
+    // ======================================================
+    // RENDERIZAR TODOS OS EXERCÍCIOS
+    // ======================================================
+    const container = document.getElementById('exercises-container');
+    exercises.forEach((ex, idx) => {
+        container.appendChild(buildExercise(ex, idx));
+    });
+
+    // ======================================================
+    // MOSTRAR ERRO NO VÍDEO
+    // ======================================================
+    function mostrarErroVideo(exId) {
+        const container = document.getElementById(exId + '_videoContainer');
+        container.innerHTML = `
+            <div class="video-placeholder">
+                📹 Vídeo não disponível no momento.<br>
+                <small>Tente novamente mais tarde ou use a dica.</small>
+            </div>
+        `;
+    }
+
+    // ======================================================
+    // MOSTRAR VÍDEO
+    // ======================================================
+    function showVideo(exId) {
+        getAudio();
+        const videoSection = document.getElementById(exId + '_videoSection');
+        videoSection.classList.add('show');
+        videoSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        playClick();
+    }
+
+    // ======================================================
+    // ESTADO DE CONCLUSÃO
+    // ======================================================
+    const doneStatus = {};
+    exercises.forEach(ex => doneStatus[ex.id] = false);
+
+    function updateProgress() {
+        let done = 0;
+        for (let id in doneStatus) {
+            if (doneStatus[id]) done++;
+        }
+        document.getElementById('doneCount').textContent = done;
+        document.getElementById('progressFill').style.width = (done / exercises.length * 100) + '%';
+    }
+
+    // ======================================================
+    // VERIFICAÇÃO
+    // ======================================================
+    async function verifyEx(exId) {
+        getAudio();
+        const ex = exercises.find(e => e.id === exId);
+        if (!ex) return;
+
+        const expInput = document.getElementById(exId + '_exp');
+        const factInput = document.getElementById(exId + '_fact');
+        const fb = document.getElementById(exId + '_feedback');
+
+        // Se já foi respondida corretamente, não faz nada
+        if (doneStatus[exId]) {
+            fb.className = 'feedback-box show info';
+            fb.textContent = '✅ Esta questão já foi concluída.';
+            playClick();
+            return;
+        }
+
+        const expVal = normalize(expInput.value);
+        const factVal = normalize(factInput.value);
+
+        const a = ex.a;
+        const b = ex.b;
+        const S = a + b;
+        const P = a * b;
+
+        // Expressão esperada: x^2 + Sx + P (com sinais)
+        let expectedExp = 'x^2';
+        if (S !== 0) {
+            if (S > 0) expectedExp += '+' + S + 'x';
+            else expectedExp += S + 'x';
+        }
+        if (P !== 0) {
+            if (P > 0) expectedExp += '+' + P;
+            else expectedExp += P;
+        }
+        if (S === 0 && P === 0) expectedExp = 'x^2';
+
+        // Fatorada esperada: (x+a)(x+b)  ou (x+b)(x+a)
+        const fact1 = '(x+' + a + ')(x+' + b + ')';
+        const fact2 = '(x+' + b + ')(x+' + a + ')';
+        const nFact1 = normalize(fact1);
+        const nFact2 = normalize(fact2);
+
+        let expOk = (normalize(expectedExp) === expVal);
+        let factOk = (factVal === nFact1 || factVal === nFact2);
+
+        // Salvar resposta no Supabase
+        await salvarResposta(exId, expVal, factVal, expOk && factOk);
+
+        if (expOk && factOk) {
+            fb.className = 'feedback-box show success';
+            fb.textContent = '✅ Perfeito! Você acertou a fatoração.';
+            playCorrect();
+            expInput.disabled = true;
+            factInput.disabled = true;
+            doneStatus[exId] = true;
+            updateProgress();
+            
+            // Mostrar vídeo automaticamente após acerto
+            setTimeout(() => {
+                showVideo(exId);
+            }, 1000);
+        } else {
+            let msg = '❌ Incorreto. ';
+            if (!expOk) msg += 'A expressão expandida está errada. ';
+            if (!factOk) msg += 'A forma fatorada está errada.';
+            fb.className = 'feedback-box show error';
+            fb.textContent = msg;
+            playWrong();
+        }
+    }
+
+    // ======================================================
+    // SALVAR RESPOSTA NO SUPABASE
+    // ======================================================
+    async function salvarResposta(exId, expResp, factResp, correta) {
+        if (!ALUNO_ID || !JOGO_ID) return;
+        
+        const ex = exercises.find(e => e.id === exId);
+        if (!ex) return;
+        
+        const a = ex.a;
+        const b = ex.b;
+        const S = a + b;
+        const P = a * b;
+        
+        // Gerar resposta correta
+        let expectedExp = 'x^2';
+        if (S !== 0) {
+            if (S > 0) expectedExp += '+' + S + 'x';
+            else expectedExp += S + 'x';
+        }
+        if (P !== 0) {
+            if (P > 0) expectedExp += '+' + P;
+            else expectedExp += P;
+        }
+        
+        const dados = {
+            avaliacao_id: null,
+            aluno_id: ALUNO_ID,
+            questao_id: exId, // Usando o ID da questão como referência
+            alternativa_id: null,
+            letra_resposta: null,
+            correta: correta,
+            tempo_resposta: 0,
+            resposta_texto: `Expandida: ${expResp} | Fatorada: ${factResp}`,
+            erro_identificado: correta ? null : (correta ? null : 'Resposta incorreta'),
+            tentativa_numero: 1
+        };
+        
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/respostas`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(dados)
+            });
+        } catch (e) {
+            console.error('Erro ao salvar resposta:', e);
+        }
+    }
+
+    // ======================================================
+    // DICA
+    // ======================================================
+    function showExHint(exId) {
+        getAudio();
+        const ex = exercises.find(e => e.id === exId);
+        if (!ex) return;
+        const fb = document.getElementById(exId + '_feedback');
+        const a = ex.a;
+        const b = ex.b;
+        const S = a + b;
+        const P = a * b;
+        let hint = `💡 A figura forma um retângulo de lados (x + ${a}) e (x + ${b}). A área total é x² + ${S}x + ${P}, que fatorada fica (x + ${a})(x + ${b}).`;
+        fb.className = 'feedback-box show info';
+        fb.textContent = hint;
+        playClick();
+    }
+
+    // ======================================================
+    // REFAZER
+    // ======================================================
+    function resetEx(exId) {
+        getAudio();
+        const expInput = document.getElementById(exId + '_exp');
+        const factInput = document.getElementById(exId + '_fact');
+        const fb = document.getElementById(exId + '_feedback');
+        const videoSection = document.getElementById(exId + '_videoSection');
+
+        expInput.value = '';
+        factInput.value = '';
+        expInput.disabled = false;
+        factInput.disabled = false;
+        fb.className = 'feedback-box';
+        fb.textContent = '';
+        videoSection.classList.remove('hide');
+
+        // Se estava marcado como feito, desmarca
+        if (doneStatus[exId]) {
+            doneStatus[exId] = false;
+            updateProgress();
+        }
+        playClick();
+    }
+</script>
+</body>
+</html>
