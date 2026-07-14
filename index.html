@@ -1,3 +1,4 @@
+<!-- ARQUIVO: Atividade de Fatoração (HTML) -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -252,6 +253,9 @@
     let tentativasPorQuestao = {};
     let statusQuestao = {};
     let acertos = 0, puladas = 0, erros = 0;
+    
+    // ✅ NOVO: Array para armazenar os detalhes dos erros
+    let detalhesErrosAtividade = [];
 
     const IDS_QUESTOES_NOVAS = [
         '00145785-9e2d-40c6-b40e-114c5b1ee7a9',
@@ -408,6 +412,9 @@
                 tentativasPorQuestao[q.id] = 0;
                 statusQuestao[q.id] = 'pendente';
             });
+
+            // ✅ NOVO: Resetar o array de erros ao iniciar
+            detalhesErrosAtividade = [];
 
             questaoAtual = 0;
             acertos = 0; puladas = 0; erros = 0;
@@ -604,6 +611,15 @@
                 msgErro += `\n\n💡 ${distrator.diagnostico}\n${distrator.explicacao}`;
             }
             
+            // ✅ NOVO: Capturar os detalhes do erro para o relatório
+            const explicacao = distrator ? `${distrator.diagnostico} - ${distrator.explicacao}` : 'Revise os passos da resolução com atenção.';
+            detalhesErrosAtividade.push({
+                pergunta: q.enunciado,
+                resposta: `Exp: ${respExp} | Fact: ${respFact}`,
+                respostaCorreta: `Exp: ${expCorreta} | Fact: ${factCorreta}`,
+                explicacaoErro: explicacao
+            });
+            
             feedbackEl.textContent = msgErro;
             playWrong();
             
@@ -707,6 +723,18 @@
         playClick();
         statusQuestao[qId] = 'pulada';
         puladas++;
+        
+        const q = questoesAtivas.find(item => item.id === qId);
+        
+        // ✅ NOVO: Registrar a questão pulada nos detalhes do erro
+        if (q) {
+            detalhesErrosAtividade.push({
+                pergunta: q.enunciado,
+                resposta: 'Pulada',
+                respostaCorreta: 'Não respondida',
+                explicacaoErro: 'Questão pulada pelo aluno.'
+            });
+        }
         
         const inputExp = document.getElementById(`input-exp-${qId}`);
         const inputFact = document.getElementById(`input-fact-${qId}`);
@@ -818,7 +846,8 @@
             habilidade_bncc: 'EF09MA09',
             tempo_segundos: 0,
             total_questoes: questoesAtivas.length,
-            detalhes_erros: []
+            // ✅ CORREÇÃO: Enviar o array preenchido com os detalhes dos erros
+            detalhes_erros: detalhesErrosAtividade
         };
         
         try {
@@ -841,3 +870,4 @@
 </script>
 </body>
 </html>
+<!-- FIM DO ARQUIVO: Atividade de Fatoração (HTML) -->
