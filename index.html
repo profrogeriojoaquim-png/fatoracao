@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fatoração - Série de Exercícios</title>
+    <title>Fatoração - Série de Exercícios | Saci Sabido</title>
     <style>
         * {
             margin: 0;
@@ -30,14 +30,27 @@
             margin-bottom: 30px;
         }
 
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
         h1 {
             font-size: 26px;
             color: #1c2a36;
             font-weight: 600;
-            border-bottom: 2px solid #e0e6ed;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-            letter-spacing: -0.3px;
+        }
+
+        .aluno-info {
+            background: #e3f2fd;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #007b9e;
         }
 
         .progress-info {
@@ -234,6 +247,8 @@
         .btn-warning:hover:not(:disabled) { background: #f57f17; }
         .btn-video { background: #6a1b9a; color: #fff; }
         .btn-video:hover:not(:disabled) { background: #4a148c; }
+        .btn-skip { background: #ff9800; color: #fff; }
+        .btn-skip:hover:not(:disabled) { background: #f57c00; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .feedback-box {
@@ -358,8 +373,11 @@
             color: #fff;
             font-weight: 600;
             cursor: pointer;
+            margin: 5px;
         }
         .modal-btn:hover { background: #005f7a; }
+        .modal-btn.cancel { background: #757575; }
+        .modal-btn.cancel:hover { background: #616161; }
 
         @media (max-width: 600px) {
             .container { padding: 20px; }
@@ -370,13 +388,18 @@
             .input-group { flex-direction: column; }
             .progress-bar { width: 60%; }
             .video-container { max-width: 100%; }
+            .header { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1> Fatoração – Série de Exercícios</h1>
+    <div class="header">
+        <h1>🧩 Fatoração – Série de Exercícios</h1>
+        <div class="aluno-info" id="alunoInfo"> Carregando...</div>
+    </div>
+
     <div class="subtitle" style="color:#3d5166; margin-bottom:20px;">
         Observe a figura geométrica. Escreva a <strong>expressão expandida</strong> (soma das áreas) e a <strong>forma fatorada</strong> (produto).
     </div>
@@ -390,6 +413,12 @@
 
     <div id="exercises-container"></div>
 
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn btn-danger" onclick="encerrarAtividade()" style="padding: 15px 40px; font-size: 16px;">
+            🏁 ENCERRAR ATIVIDADE
+        </button>
+    </div>
+
     <div class="copyright">© Rogério Joaquim Santana – Laboratório Interativo de Matemática</div>
 </div>
 
@@ -398,7 +427,10 @@
     <div class="modal-content">
         <h3 id="modalTitle">⚠️ Atenção</h3>
         <p id="modalMessage">Mensagem personalizada.</p>
-        <button class="modal-btn" onclick="closeModal()">OK</button>
+        <div style="text-align: center;">
+            <button class="modal-btn" onclick="closeModal()">OK</button>
+            <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
+        </div>
     </div>
 </div>
 
@@ -409,10 +441,15 @@
     const SUPABASE_URL = 'https://qmcqffnawtfaenyziwsn.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtY3FmZm5hd3RmYWVueXppd3NuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNTM5NTMsImV4cCI6MjA4OTcyOTk1M30._CjaNoeJeQp-8s8Jt-dk3bJfktdEV97R5LhLnWgYrNc';
     
-    const ALUNO_ID = new URLSearchParams(window.location.search).get('aluno_id');
-    const JOGO_ID = new URLSearchParams(window.location.search).get('jogo_id');
-    const TURMA_ID = new URLSearchParams(window.location.search).get('turma_id');
-    const HABILIDADE_BNCC = new URLSearchParams(window.location.search).get('bncc') || 'EF07MA18';
+    const urlParams = new URLSearchParams(window.location.search);
+    const ALUNO_ID = urlParams.get('aluno_id');
+    const JOGO_ID = urlParams.get('jogo_id');
+    const TURMA_ID = urlParams.get('turma_id');
+    const HABILIDADE_BNCC = urlParams.get('bncc') || 'EF07MA18';
+    
+    let nomeAluno = "Estudante";
+    let nomeEscola = "";
+    let codigoTurma = "";
 
     // ======================================================
     // URL BASE DOS VÍDEOS
@@ -471,6 +508,53 @@
     
     function playClick() { 
         playTone(880, 0.05, 'sine', 0.1); 
+    }
+
+    // ======================================================
+    // CARREGAR DADOS DO ALUNO
+    // ======================================================
+    async function carregarDadosAluno() {
+        if (!ALUNO_ID || !TURMA_ID) {
+            document.getElementById('alunoInfo').innerHTML = '👤 Modo Teste';
+            return;
+        }
+        
+        try {
+            // Buscar dados do aluno
+            const respAluno = await fetch(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${ALUNO_ID}&select=nome_aluno,turma_id`, {
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            });
+            const alunoData = await respAluno.json();
+            if (alunoData && alunoData[0]?.nome_aluno) {
+                nomeAluno = alunoData[0].nome_aluno;
+            }
+            
+            // Buscar dados da turma
+            const respTurma = await fetch(`${SUPABASE_URL}/rest/v1/turmas?id=eq.${TURMA_ID}&select=codigo,escola_id`, {
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            });
+            const turmaData = await respTurma.json();
+            if (turmaData && turmaData[0]) {
+                codigoTurma = turmaData[0].codigo || "Turma";
+                if (turmaData[0].escola_id) {
+                    const respEscola = await fetch(`${SUPABASE_URL}/rest/v1/escolas?id=eq.${turmaData[0].escola_id}&select=nome`, {
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                    });
+                    const escolaData = await respEscola.json();
+                    if (escolaData && escolaData[0]?.nome) {
+                        nomeEscola = escolaData[0].nome;
+                    }
+                }
+            }
+            
+            let textoInfo = `👤 ${nomeAluno}`;
+            if (nomeEscola) textoInfo += ` • ${nomeEscola}`;
+            if (codigoTurma) textoInfo += ` • Turma: ${codigoTurma}`;
+            document.getElementById('alunoInfo').innerHTML = textoInfo;
+        } catch(e) {
+            console.error('Erro ao carregar dados:', e);
+            document.getElementById('alunoInfo').innerHTML = `👤 ${nomeAluno}`;
+        }
     }
 
     // ======================================================
@@ -542,7 +626,7 @@
         block.id = ex.id;
 
         block.innerHTML = `
-            <div class="activity-title">📐 Questão ${index+1}</div>
+            <div class="activity-title"> Questão ${index+1}</div>
             <div class="instruction">✏️ Escreva a expressão expandida e a forma fatorada representadas pela figura.</div>
 
             <div class="grid-container" style="grid-template-columns: repeat(2, 120px); grid-template-rows: repeat(2, 120px);">
@@ -567,6 +651,7 @@
                 <button class="btn btn-success" onclick="verifyEx('${ex.id}')">✅ Verificar</button>
                 <button class="btn btn-warning" id="${ex.id}_btnDica" onclick="showExHint('${ex.id}')" style="display:none;">💡 Dica</button>
                 <button class="btn btn-video" id="${ex.id}_btnVideo" onclick="showVideo('${ex.id}')" style="display:none;">🎬 Ver Vídeo</button>
+                <button class="btn btn-skip" id="${ex.id}_btnSkip" onclick="skipEx('${ex.id}')">️ Pular</button>
                 <button class="btn btn-danger" onclick="resetEx('${ex.id}')">↺ Refazer</button>
             </div>
             <div id="${ex.id}_feedback" class="feedback-box"></div>
@@ -621,10 +706,12 @@
     // ESTADO
     // ======================================================
     const doneStatus = {};
-    const tentativaRealizada = {};
+    const skippedStatus = {};
+    const tentativasPorQuestao = {};
     exercises.forEach(ex => {
         doneStatus[ex.id] = false;
-        tentativaRealizada[ex.id] = false;
+        skippedStatus[ex.id] = false;
+        tentativasPorQuestao[ex.id] = 0;
     });
 
     function updateProgress() {
@@ -639,7 +726,7 @@
     // ======================================================
     // SALVAR RESPOSTA NO SUPABASE
     // ======================================================
-    async function salvarResposta(exId, expResp, factResp, correta) {
+    async function salvarResposta(exId, expResp, factResp, correta, pulada = false) {
         if (!ALUNO_ID || !JOGO_ID) {
             console.log('Sem ALUNO_ID ou JOGO_ID - modo teste');
             return;
@@ -656,9 +743,9 @@
             letra_resposta: null,
             correta: correta,
             tempo_resposta: 0,
-            resposta_texto: `Expandida: ${expResp} | Fatorada: ${factResp}`,
-            erro_identificado: correta ? null : 'Resposta incorreta',
-            tentativa_numero: 1
+            resposta_texto: pulada ? 'Questão pulada' : `Expandida: ${expResp} | Fatorada: ${factResp}`,
+            erro_identificado: correta ? null : (pulada ? 'Questão pulada' : 'Resposta incorreta'),
+            tentativa_numero: tentativasPorQuestao[exId] || 1
         };
         
         try {
@@ -674,12 +761,10 @@
             });
             
             if (resp.ok) {
-                console.log('Resposta salva com sucesso:', exId);
-            } else {
-                console.error('Erro ao salvar resposta:', resp.statusText);
+                console.log('Resposta salva:', exId);
             }
         } catch (e) {
-            console.error('Erro na requisição:', e);
+            console.error('Erro ao salvar:', e);
         }
     }
 
@@ -696,16 +781,26 @@
         const fb = document.getElementById(exId + '_feedback');
         const btnVideo = document.getElementById(exId + '_btnVideo');
         const btnDica = document.getElementById(exId + '_btnDica');
+        const btnSkip = document.getElementById(exId + '_btnSkip');
 
-        if (doneStatus[exId]) {
+        if (doneStatus[exId] || skippedStatus[exId]) {
             fb.className = 'feedback-box show info';
-            fb.textContent = '✅ Esta questão já foi concluída.';
+            fb.textContent = skippedStatus[exId] ? '⏭️ Questão pulada.' : '✅ Esta questão já foi concluída.';
             playClick();
             return;
         }
 
         const expVal = normalize(expInput.value);
         const factVal = normalize(factInput.value);
+
+        if (!expVal || !factVal) {
+            fb.className = 'feedback-box show error';
+            fb.textContent = '️ Preencha ambos os campos antes de verificar.';
+            playWrong();
+            return;
+        }
+
+        tentativasPorQuestao[exId]++;
 
         const a = ex.a;
         const b = ex.b;
@@ -738,9 +833,6 @@
         let expOk = (nExpExp === expVal);
         let factOk = (factVal === nFact1 || factVal === nFact2);
 
-        tentativaRealizada[exId] = true;
-        btnVideo.style.display = 'inline-block';
-
         // Salvar no banco
         await salvarResposta(exId, expInput.value, factInput.value, expOk && factOk);
 
@@ -750,14 +842,27 @@
             playCorrect();
             expInput.disabled = true;
             factInput.disabled = true;
+            btnSkip.style.display = 'none';
             doneStatus[exId] = true;
             updateProgress();
             
-            setTimeout(() => {
-                showVideo(exId);
-            }, 1000);
+            // Liberar vídeo após acerto (segunda tentativa ou mais)
+            if (tentativasPorQuestao[exId] >= 2) {
+                btnVideo.style.display = 'inline-block';
+                setTimeout(() => {
+                    showVideo(exId);
+                }, 1000);
+            }
         } else {
-            btnDica.style.display = 'inline-block';
+            // Primeira tentativa errada: liberar dica
+            if (tentativasPorQuestao[exId] === 1) {
+                btnDica.style.display = 'inline-block';
+            }
+            
+            // Segunda tentativa ou mais: liberar vídeo
+            if (tentativasPorQuestao[exId] >= 2) {
+                btnVideo.style.display = 'inline-block';
+            }
             
             let msg = '❌ Incorreto. ';
             if (!expOk) msg += 'A expressão expandida está errada. ';
@@ -765,6 +870,33 @@
             fb.className = 'feedback-box show error';
             fb.textContent = msg;
             playWrong();
+        }
+    }
+
+    // ======================================================
+    // PULAR QUESTÃO
+    // ======================================================
+    async function skipEx(exId) {
+        if (confirm('Deseja pular esta questão? Você poderá voltar depois.')) {
+            getAudio();
+            const expInput = document.getElementById(exId + '_exp');
+            const factInput = document.getElementById(exId + '_fact');
+            const fb = document.getElementById(exId + '_feedback');
+            const btnSkip = document.getElementById(exId + '_btnSkip');
+            
+            expInput.disabled = true;
+            factInput.disabled = true;
+            btnSkip.style.display = 'none';
+            
+            skippedStatus[exId] = true;
+            tentativasPorQuestao[exId]++;
+            
+            await salvarResposta(exId, '', '', false, true);
+            
+            fb.className = 'feedback-box show info';
+            fb.textContent = '⏭️ Questão pulada. Você pode refazer depois.';
+            playClick();
+            updateProgress();
         }
     }
 
@@ -787,7 +919,7 @@
         if (S !== 0 && P !== 0) {
             hint = `💡 Observe os lados do retângulo formado. A expressão expandida é a soma de todas as áreas. Para fatorar, procure dois números que somados dão ${S} e multiplicados dão ${P}.`;
         } else if (S === 0) {
-            hint = `💡 Quando a soma dos coeficientes é zero, os números são opostos. Multiplique-os para encontrar o termo constante. A forma fatorada será (x + a)(x - a).`;
+            hint = ` Quando a soma dos coeficientes é zero, os números são opostos. Multiplique-os para encontrar o termo constante. A forma fatorada será (x + a)(x - a).`;
         } else if (P === 0) {
             hint = `💡 Quando o produto é zero, um dos fatores é zero. A expressão pode ser fatorada colocando x em evidência: x(x + ${S}).`;
         }
@@ -808,6 +940,7 @@
         const videoSection = document.getElementById(exId + '_videoSection');
         const btnVideo = document.getElementById(exId + '_btnVideo');
         const btnDica = document.getElementById(exId + '_btnDica');
+        const btnSkip = document.getElementById(exId + '_btnSkip');
 
         expInput.value = '';
         factInput.value = '';
@@ -816,18 +949,88 @@
         fb.className = 'feedback-box';
         fb.textContent = '';
         videoSection.classList.remove('show');
+        btnSkip.style.display = 'inline-block';
 
         if (doneStatus[exId]) {
             doneStatus[exId] = false;
             updateProgress();
         }
+        if (skippedStatus[exId]) {
+            skippedStatus[exId] = false;
+        }
         
-        tentativaRealizada[exId] = false;
+        tentativasPorQuestao[exId] = 0;
         btnVideo.style.display = 'none';
         btnDica.style.display = 'none';
         
         playClick();
     }
+
+    // ======================================================
+    // ENCERRAR ATIVIDADE
+    // ======================================================
+    async function encerrarAtividade() {
+        const acertos = Object.values(doneStatus).filter(v => v).length;
+        const puladas = Object.values(skippedStatus).filter(v => v).length;
+        const restantes = 10 - acertos - puladas;
+        
+        let msg = ` Resumo da atividade:\n\n`;
+        msg += `✅ Acertos: ${acertos}/10\n`;
+        msg += `️ Puladas: ${puladas}/10\n`;
+        if (restantes > 0) {
+            msg += `⏳ Não respondidas: ${restantes}/10\n`;
+        }
+        msg += `\nDeseja realmente encerrar?`;
+        
+        if (confirm(msg)) {
+            // Salvar resultado final
+            await salvarResultadoFinal(acertos, puladas);
+            
+            // Redirecionar ou mostrar mensagem
+            showModal('Atividade Encerrada', `✅ Suas respostas foram salvas!\n\nAcertos: ${acertos}/10\n\nVolte sempre!`);
+            
+            // Opcional: redirecionar
+            // window.location.href = 'https://sacisabido.com.br/aluno/atividades';
+        }
+    }
+
+    // ======================================================
+    // SALVAR RESULTADO FINAL
+    // ======================================================
+    async function salvarResultadoFinal(acertos, puladas) {
+        if (!ALUNO_ID || !JOGO_ID) return;
+        
+        const dados = {
+            aluno_id: ALUNO_ID,
+            jogo_id: JOGO_ID,
+            turma_id: TURMA_ID || null,
+            acertos: acertos,
+            erros: 10 - acertos - puladas,
+            habilidade_bncc: HABILIDADE_BNCC,
+            tempo_segundos: 0,
+            total_questoes: 10,
+            detalhes_erros: []
+        };
+        
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/resultados`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                },
+                body: JSON.stringify(dados)
+            });
+        } catch (e) {
+            console.error('Erro ao salvar resultado final:', e);
+        }
+    }
+
+    // ======================================================
+    // INICIALIZAÇÃO
+    // ======================================================
+    carregarDadosAluno();
 </script>
 </body>
 </html>
