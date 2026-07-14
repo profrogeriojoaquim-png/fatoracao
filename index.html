@@ -281,11 +281,16 @@
             border-radius: 8px;
             overflow: hidden;
             margin-bottom: 12px;
+            max-width: 640px;
+            margin-left: auto;
+            margin-right: auto;
+            aspect-ratio: 16 / 9;
         }
         .video-container video {
             width: 100%;
-            max-height: 400px;
+            height: 100%;
             display: block;
+            object-fit: contain;
         }
         .video-placeholder {
             background: #e0e6ed;
@@ -364,6 +369,7 @@
             .grid-cell .lin, .grid-cell .lin-neg { font-size: 24px; }
             .input-group { flex-direction: column; }
             .progress-bar { width: 60%; }
+            .video-container { max-width: 100%; }
         }
     </style>
 </head>
@@ -544,7 +550,7 @@
             <div class="btn-group">
                 <button class="btn btn-success" onclick="verifyEx('${ex.id}')">✅ Verificar</button>
                 <button class="btn btn-warning" onclick="showExHint('${ex.id}')">💡 Dica</button>
-                <button class="btn btn-video" onclick="showVideo('${ex.id}')"> Ver Vídeo</button>
+                <button class="btn btn-video" id="${ex.id}_btnVideo" onclick="showVideo('${ex.id}')" style="display:none;">🎬 Ver Vídeo</button>
                 <button class="btn btn-danger" onclick="resetEx('${ex.id}')">↺ Refazer</button>
             </div>
             <div id="${ex.id}_feedback" class="feedback-box"></div>
@@ -578,7 +584,7 @@
         const container = document.getElementById(exId + '_videoContainer');
         container.innerHTML = `
             <div class="video-placeholder">
-                 Vídeo não disponível no momento.<br>
+                📹 Vídeo não disponível no momento.<br>
                 <small>Tente novamente mais tarde ou use a dica.</small>
             </div>
         `;
@@ -596,10 +602,14 @@
     }
 
     // ======================================================
-    // ESTADO DE CONCLUSÃO
+    // ESTADO DE CONCLUSÃO E TENTATIVAS
     // ======================================================
     const doneStatus = {};
-    exercises.forEach(ex => doneStatus[ex.id] = false);
+    const tentativaRealizada = {};
+    exercises.forEach(ex => {
+        doneStatus[ex.id] = false;
+        tentativaRealizada[ex.id] = false;
+    });
 
     function updateProgress() {
         let done = 0;
@@ -621,6 +631,7 @@
         const expInput = document.getElementById(exId + '_exp');
         const factInput = document.getElementById(exId + '_fact');
         const fb = document.getElementById(exId + '_feedback');
+        const btnVideo = document.getElementById(exId + '_btnVideo');
 
         if (doneStatus[exId]) {
             fb.className = 'feedback-box show info';
@@ -655,6 +666,10 @@
 
         let expOk = (normalize(expectedExp) === expVal);
         let factOk = (factVal === nFact1 || factVal === nFact2);
+
+        // Marcar que a primeira tentativa foi realizada
+        tentativaRealizada[exId] = true;
+        btnVideo.style.display = 'inline-block';
 
         if (expOk && factOk) {
             fb.className = 'feedback-box show success';
@@ -705,6 +720,7 @@
         const factInput = document.getElementById(exId + '_fact');
         const fb = document.getElementById(exId + '_feedback');
         const videoSection = document.getElementById(exId + '_videoSection');
+        const btnVideo = document.getElementById(exId + '_btnVideo');
 
         expInput.value = '';
         factInput.value = '';
@@ -718,6 +734,11 @@
             doneStatus[exId] = false;
             updateProgress();
         }
+        
+        // Ocultar botão de vídeo ao refazer
+        tentativaRealizada[exId] = false;
+        btnVideo.style.display = 'none';
+        
         playClick();
     }
 </script>
