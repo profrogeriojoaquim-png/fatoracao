@@ -13,8 +13,14 @@
             border-top: 6px solid #007b9e; margin-bottom: 30px;
         }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-        h1 { font-size: 26px; color: #1c2a36; font-weight: 600; }
+        h1 { font-size: 26px; color: #1c2a36; font-weight: 600; flex: 1; }
         .aluno-info { background: #e3f2fd; padding: 10px 20px; border-radius: 20px; font-weight: 600; color: #007b9e; }
+        .btn-back { 
+            padding: 8px 18px; border: none; border-radius: 20px; 
+            background: #757575; color: #fff; font-weight: 600; 
+            cursor: pointer; font-size: 13px; transition: 0.2s;
+        }
+        .btn-back:hover { background: #616161; }
         .progress-info { display: flex; justify-content: space-between; align-items: center; background: #f5f8fa; padding: 12px 20px; border-radius: 8px; margin-bottom: 30px; }
         .progress-bar { width: 70%; height: 10px; background: #e0e6ed; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: #2e7d32; width: 0%; transition: width 0.3s; }
@@ -126,6 +132,7 @@
 
 <div class="container">
     <div class="header">
+        <button class="btn-back" id="btnVoltar" onclick="solicitarVoltar()" style="display:none;">← Voltar ao Sistema</button>
         <h1>🧩 Fatoração – Série de Atividades</h1>
         <div class="aluno-info" id="alunoInfo">Carregando...</div>
     </div>
@@ -168,7 +175,7 @@
     <!-- TELA FINAL -->
     <div id="screen-final" class="screen">
         <div class="results-box">
-            <h2> Atividade Concluída!</h2>
+            <h2>🎉 Atividade Concluída!</h2>
             <p>Parabéns pelo seu esforço! Aqui está o resumo da sua sessão:</p>
             
             <div class="stats-grid">
@@ -190,8 +197,9 @@
                 </div>
             </div>
 
-            <div style="margin-top: 30px;">
+            <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                 <button class="btn btn-primary" onclick="location.reload()">🔄 Refazer Atividade</button>
+                <button class="btn btn-danger" onclick="solicitarVoltar()">← Voltar ao Sistema</button>
             </div>
         </div>
     </div>
@@ -222,6 +230,7 @@
     const ALUNO_ID = urlParams.get('aluno_id');
     const JOGO_ID = urlParams.get('jogo_id');
     const TURMA_ID = urlParams.get('turma_id');
+    const TOKEN = urlParams.get('token');
     
     let nomeAluno = "Estudante";
     let questoesAtivas = [];
@@ -305,6 +314,14 @@
     function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
+        
+        // Mostrar/ocultar botão Voltar
+        const btnVoltar = document.getElementById('btnVoltar');
+        if (screenId === 'screen-welcome') {
+            btnVoltar.style.display = 'none';
+        } else {
+            btnVoltar.style.display = 'inline-block';
+        }
     }
 
     async function init() {
@@ -317,8 +334,11 @@
             return;
         }
         try {
+            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+            if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+            
             const resp = await fetch(`${SUPABASE_URL}/rest/v1/alunos?id=eq.${ALUNO_ID}&select=nome_aluno`, {
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                headers: headers
             });
             const data = await resp.json();
             if (data && data[0]?.nome_aluno) {
@@ -335,13 +355,16 @@
         playClick();
         
         try {
-            const idsParam = IDS_QUESTOES_NOVAS.join(',');
+            const idsParam = IDS_QUESTOES_NOVAS.map(id => `"${id}"`).join(',');
+            const headers = { 
+                'apikey': SUPABASE_KEY, 
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            };
+            if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+            
             const resp = await fetch(`${SUPABASE_URL}/rest/v1/questoes?id=in.(${idsParam})&ativo=eq.true&select=id,enunciado,resolucao_passos`, {
-                headers: { 
-                    'apikey': SUPABASE_KEY, 
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json'
-                }
+                headers: headers
             });
             
             if (!resp.ok) {
@@ -429,12 +452,12 @@
                     <button class="btn btn-success" onclick="verificarResposta('${q.id}')">✅ Verificar</button>
                     <button class="btn btn-warning" id="btn-dica-${q.id}" onclick="mostrarDica('${q.id}')" style="display:none;">💡 Dica</button>
                     <button class="btn btn-video" id="btn-video-${q.id}" onclick="mostrarVideo('${q.id}')" style="display:none;">🎬 Ver Vídeo</button>
-                    <button class="btn btn-solution" id="btn-solution-${q.id}" onclick="mostrarResolucao('${q.id}')" style="display:none;">📖 Ver Resolução</button>
+                    <button class="btn btn-solution" id="btn-solution-${q.id}" onclick="mostrarResolucao('${q.id}')" style="display:none;"> Ver Resolução</button>
                     <button class="btn btn-skip" id="btn-pular-${q.id}" onclick="solicitarPular('${q.id}')">⏭️ Pular</button>
                 </div>
                 <div id="feedback-${q.id}" class="feedback-box"></div>
                 <div class="video-section" id="video-section-${q.id}">
-                    <h3>🎬 Vídeo explicativo</h3>
+                    <h3> Vídeo explicativo</h3>
                     <div class="video-container" id="video-container-${q.id}">
                         <video controls preload="metadata" onerror="mostrarErroVideo('${q.id}')">
                             <source src="${VIDEOS_POR_QUESTAO[q.id] || ''}" type="video/mp4">
@@ -481,6 +504,29 @@
         `;
     }
 
+    // ======================================================
+    // NORMALIZAÇÃO E VALIDAÇÃO ROBUSTA
+    // ======================================================
+    function normalize(str) {
+        return str.replace(/\s/g, '').replace(/\*/g, '').replace(/²/g, '^2').replace(/\+-/g, '-').toLowerCase();
+    }
+
+    // Ordena os fatores para aceitar (x+2)(x-6) e (x-6)(x+2)
+    function normalizarFatorada(str) {
+        let s = normalize(str);
+        // Extrai os dois fatores entre parênteses
+        const match = s.match(/\(x[+-]?\d*\)\(x[+-]?\d*\)/);
+        if (!match) return s;
+        
+        // Extrai os dois fatores
+        const fatores = s.match(/\(x[+-]?\d*\)/g);
+        if (!fatores || fatores.length !== 2) return s;
+        
+        // Ordena alfabeticamente
+        fatores.sort();
+        return fatores[0] + fatores[1];
+    }
+
     async function verificarResposta(qId) {
         getAudio();
         const q = questoesAtivas.find(item => item.id === qId);
@@ -506,9 +552,9 @@
         const factCorreta = passo5 ? passo5.visual : '';
         
         const respExpNorm = normalize(respExp);
-        const respFactNorm = normalize(respFact);
+        const respFactNorm = normalizarFatorada(respFact);
         const expCorretaNorm = normalize(expCorreta);
-        const factCorretaNorm = normalize(factCorreta);
+        const factCorretaNorm = normalizarFatorada(factCorreta);
         
         const expOk = respExpNorm === expCorretaNorm;
         const factOk = respFactNorm === factCorretaNorm;
@@ -584,10 +630,6 @@
             }
         }
         return null;
-    }
-
-    function normalize(str) {
-        return str.replace(/\s/g, '').replace(/\*/g, '').replace(/²/g, '^2').replace(/\+-/g, '-').toLowerCase();
     }
 
     function mostrarDica(qId) {
@@ -697,6 +739,20 @@
         showModal('Encerrar Atividade', msg, () => finalizarAtividade(), null);
     }
 
+    function solicitarVoltar() {
+        const msg = `Deseja realmente voltar ao sistema?\n\nSeus resultados até o momento serão salvos.`;
+        showModal('Voltar ao Sistema', msg, async () => {
+            await salvarResultadoFinal(acertos, puladas);
+            // Tenta voltar ao sistema
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Se não há histórico, redireciona para o sistema
+                window.location.href = 'https://sacisabido.com.br';
+            }
+        }, null);
+    }
+
     async function finalizarAtividade() {
         await salvarResultadoFinal(acertos, puladas);
         
@@ -709,6 +765,14 @@
 
     async function salvarRespostaBanco(qId, respostaTexto, correta) {
         if (!ALUNO_ID || !JOGO_ID) return;
+        
+        const headers = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Prefer': 'return=minimal'
+        };
+        if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
         
         const dados = {
             avaliacao_id: null,
@@ -726,12 +790,7 @@
         try {
             await fetch(`${SUPABASE_URL}/rest/v1/respostas`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Prefer': 'return=minimal'
-                },
+                headers: headers,
                 body: JSON.stringify(dados)
             });
         } catch (e) {
@@ -741,6 +800,13 @@
 
     async function salvarResultadoFinal(acertos, puladas) {
         if (!ALUNO_ID || !JOGO_ID) return;
+        
+        const headers = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        };
+        if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
         
         const dados = {
             aluno_id: ALUNO_ID,
@@ -757,11 +823,7 @@
         try {
             await fetch(`${SUPABASE_URL}/rest/v1/resultados`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`
-                },
+                headers: headers,
                 body: JSON.stringify(dados)
             });
         } catch (e) {
