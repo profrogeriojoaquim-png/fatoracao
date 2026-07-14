@@ -232,8 +232,6 @@
         .btn-danger:hover:not(:disabled) { background: #8e0000; }
         .btn-warning { background: #f9a825; color: #1a2a3a; }
         .btn-warning:hover:not(:disabled) { background: #f57f17; }
-        .btn-video { background: #6a1b9a; color: #fff; }
-        .btn-video:hover:not(:disabled) { background: #4a148c; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .feedback-box {
@@ -260,45 +258,6 @@
             background: #e3f2fd;
             border-left-color: #007b9e;
             color: #0d3a4f;
-        }
-
-        .video-section {
-            margin-top: 20px;
-            padding: 18px;
-            background: #f5f8fa;
-            border-radius: 8px;
-            border: 1px solid #d0d7dd;
-            display: none;
-        }
-        .video-section.show { display: block; }
-        .video-section h3 {
-            font-size: 16px;
-            color: #1c2a36;
-            margin-bottom: 12px;
-        }
-        .video-container {
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 12px;
-            max-width: 640px;
-            margin-left: auto;
-            margin-right: auto;
-            aspect-ratio: 16 / 9;
-        }
-        .video-container video {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-        }
-        .video-placeholder {
-            background: #e0e6ed;
-            padding: 30px;
-            border-radius: 8px;
-            color: #5e6f7d;
-            font-size: 14px;
-            text-align: center;
         }
 
         .copyright {
@@ -369,7 +328,6 @@
             .grid-cell .lin, .grid-cell .lin-neg { font-size: 24px; }
             .input-group { flex-direction: column; }
             .progress-bar { width: 60%; }
-            .video-container { max-width: 100%; }
         }
     </style>
 </head>
@@ -404,25 +362,6 @@
 
 <script>
     // ======================================================
-    // URL BASE DOS VÍDEOS (GitHub Raw) - REPOSITÓRIO FATORACAO
-    // ======================================================
-    const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/profrogeriojoaquim-png/fatoracao/main/videos/';
-    
-    // Mapeamento dos vídeos por questão
-    const VIDEOS_POR_QUESTAO = {
-        'ex1': GITHUB_RAW_BASE + 'fatoracao_q1.mp4',
-        'ex2': GITHUB_RAW_BASE + 'fatoracao_q2.mp4',
-        'ex3': GITHUB_RAW_BASE + 'fatoracao_q3.mp4',
-        'ex4': GITHUB_RAW_BASE + 'fatoracao_q4.mp4',
-        'ex5': GITHUB_RAW_BASE + 'fatoracao_q5.mp4',
-        'ex6': GITHUB_RAW_BASE + 'fatoracao_q6.mp4',
-        'ex7': GITHUB_RAW_BASE + 'fatoracao_q7.mp4',
-        'ex8': GITHUB_RAW_BASE + 'fatoracao_q8.mp4',
-        'ex9': GITHUB_RAW_BASE + 'fatoracao_q9.mp4',
-        'ex10': GITHUB_RAW_BASE + 'fatoracao_q10.mp4'
-    };
-
-    // ======================================================
     // SISTEMA DE ÁUDIO
     // ======================================================
     let audioCtx = null;
@@ -449,19 +388,12 @@
         } catch (_) {}
     }
 
-    function playCorrect() { 
-        playTone(523, 0.1);
+    function playCorrect() { playTone(523, 0.1);
         setTimeout(() => playTone(659, 0.1), 120);
-        setTimeout(() => playTone(784, 0.15), 240); 
-    }
+        setTimeout(() => playTone(784, 0.15), 240); }
 
-    function playWrong() { 
-        playTone(280, 0.3, 'sawtooth', 0.15); 
-    }
-    
-    function playClick() { 
-        playTone(880, 0.05, 'sine', 0.1); 
-    }
+    function playWrong() { playTone(280, 0.3, 'sawtooth', 0.15); }
+    function playClick() { playTone(880, 0.05, 'sine', 0.1); }
 
     // ======================================================
     // MODAL
@@ -497,14 +429,21 @@
     ];
 
     // ======================================================
-    // FUNÇÃO DE NORMALIZAÇÃO
+    // FUNÇÃO DE NORMALIZAÇÃO (MELHORADA)
     // ======================================================
     function normalize(str) {
-        return str.replace(/\s/g, '').replace(/\*/g, '').replace(/²/g, '^2').toLowerCase();
+        return str
+            .replace(/\s/g, '')           // remove espaços
+            .replace(/\*/g, '')           // remove *
+            .replace(/²/g, '^2')          // ² -> ^2
+            .replace(/\+-/g, '-')         // +- -> -
+            .replace(/-\+/g, '-')         // -+ -> -
+            .replace(/\)\(/g, ')(')       // garante formato
+            .toLowerCase();
     }
 
     // ======================================================
-    // CONSTRUÇÃO DA GRADE PARA CADA EXERCÍCIO
+    // CONSTRUÇÃO DA GRADE
     // ======================================================
     function buildExercise(ex, index) {
         const a = ex.a;
@@ -549,21 +488,10 @@
 
             <div class="btn-group">
                 <button class="btn btn-success" onclick="verifyEx('${ex.id}')">✅ Verificar</button>
-                <button class="btn btn-warning" id="${ex.id}_btnDica" onclick="showExHint('${ex.id}')" style="display:none;">💡 Dica</button>
-                <button class="btn btn-video" id="${ex.id}_btnVideo" onclick="showVideo('${ex.id}')" style="display:none;"> Ver Vídeo</button>
+                <button class="btn btn-warning" onclick="showExHint('${ex.id}')">💡 Dica</button>
                 <button class="btn btn-danger" onclick="resetEx('${ex.id}')">↺ Refazer</button>
             </div>
             <div id="${ex.id}_feedback" class="feedback-box"></div>
-            
-            <div class="video-section" id="${ex.id}_videoSection">
-                <h3> Vídeo explicativo - Questão ${index+1}</h3>
-                <div class="video-container" id="${ex.id}_videoContainer">
-                    <video id="${ex.id}_video" controls preload="metadata" onerror="mostrarErroVideo('${ex.id}')">
-                        <source src="${VIDEOS_POR_QUESTAO[ex.id]}" type="video/mp4">
-                        Seu navegador não suporta a tag de vídeo.
-                    </video>
-                </div>
-            </div>
         `;
 
         return block;
@@ -578,38 +506,10 @@
     });
 
     // ======================================================
-    // MOSTRAR ERRO NO VÍDEO
-    // ======================================================
-    function mostrarErroVideo(exId) {
-        const container = document.getElementById(exId + '_videoContainer');
-        container.innerHTML = `
-            <div class="video-placeholder">
-                📹 Vídeo não disponível no momento.<br>
-                <small>Tente novamente mais tarde ou use a dica.</small>
-            </div>
-        `;
-    }
-
-    // ======================================================
-    // MOSTRAR VÍDEO
-    // ======================================================
-    function showVideo(exId) {
-        getAudio();
-        const videoSection = document.getElementById(exId + '_videoSection');
-        videoSection.classList.add('show');
-        videoSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        playClick();
-    }
-
-    // ======================================================
-    // ESTADO DE CONCLUSÃO E TENTATIVAS
+    // ESTADO DE CONCLUSÃO
     // ======================================================
     const doneStatus = {};
-    const tentativaRealizada = {};
-    exercises.forEach(ex => {
-        doneStatus[ex.id] = false;
-        tentativaRealizada[ex.id] = false;
-    });
+    exercises.forEach(ex => doneStatus[ex.id] = false);
 
     function updateProgress() {
         let done = 0;
@@ -621,7 +521,7 @@
     }
 
     // ======================================================
-    // VERIFICAÇÃO
+    // VERIFICAÇÃO (CORRIGIDA PARA ACEITAR AMBAS AS FORMAS)
     // ======================================================
     function verifyEx(exId) {
         getAudio();
@@ -631,8 +531,6 @@
         const expInput = document.getElementById(exId + '_exp');
         const factInput = document.getElementById(exId + '_fact');
         const fb = document.getElementById(exId + '_feedback');
-        const btnVideo = document.getElementById(exId + '_btnVideo');
-        const btnDica = document.getElementById(exId + '_btnDica');
 
         if (doneStatus[exId]) {
             fb.className = 'feedback-box show info';
@@ -649,6 +547,7 @@
         const S = a + b;
         const P = a * b;
 
+        // --- Construção da expressão expandida esperada ---
         let expectedExp = 'x^2';
         if (S !== 0) {
             if (S > 0) expectedExp += '+' + S + 'x';
@@ -660,17 +559,29 @@
         }
         if (S === 0 && P === 0) expectedExp = 'x^2';
 
-        const fact1 = '(x+' + a + ')(x+' + b + ')';
-        const fact2 = '(x+' + b + ')(x+' + a + ')';
-        const nFact1 = normalize(fact1);
-        const nFact2 = normalize(fact2);
+        // --- Construção das formas fatoradas (ACEITA AMBAS AS FORMAS) ---
+        // Forma 1: (x+a)(x+b)
+        const term1_a = a >= 0 ? 'x+' + a : 'x' + a;
+        const term1_b = b >= 0 ? 'x+' + b : 'x' + b;
+        const expectedFact1 = '(' + term1_a + ')(' + term1_b + ')';
+        
+        // Forma 2: (x+b)(x+a) - ORDEM INVERTIDA
+        const term2_a = b >= 0 ? 'x+' + b : 'x' + b;
+        const term2_b = a >= 0 ? 'x+' + a : 'x' + a;
+        const expectedFact2 = '(' + term2_a + ')(' + term2_b + ')';
 
-        let expOk = (normalize(expectedExp) === expVal);
+        // Normaliza todas as formas para comparação
+        const nExpExp = normalize(expectedExp);
+        const nFact1 = normalize(expectedFact1);
+        const nFact2 = normalize(expectedFact2);
+
+        console.log('Questão:', exId);
+        console.log('Exp esperada:', nExpExp, '| Sua resp:', expVal);
+        console.log('Fact1 esperada:', nFact1, '| Fact2 esperada:', nFact2);
+        console.log('Sua fact:', factVal);
+
+        let expOk = (nExpExp === expVal);
         let factOk = (factVal === nFact1 || factVal === nFact2);
-
-        // Marcar que a primeira tentativa foi realizada
-        tentativaRealizada[exId] = true;
-        btnVideo.style.display = 'inline-block';
 
         if (expOk && factOk) {
             fb.className = 'feedback-box show success';
@@ -680,17 +591,10 @@
             factInput.disabled = true;
             doneStatus[exId] = true;
             updateProgress();
-            
-            setTimeout(() => {
-                showVideo(exId);
-            }, 1000);
         } else {
-            // Mostrar botão de dica após erro
-            btnDica.style.display = 'inline-block';
-            
             let msg = '❌ Incorreto. ';
             if (!expOk) msg += 'A expressão expandida está errada. ';
-            if (!factOk) msg += 'A forma fatorada está errada.';
+            if (!factOk) msg += 'A forma fatorada está errada. Dica: verifique a ordem dos fatores.';
             fb.className = 'feedback-box show error';
             fb.textContent = msg;
             playWrong();
@@ -698,30 +602,25 @@
     }
 
     // ======================================================
-    // DICA PROGRESSIVA (ORIENTA SEM DAR RESPOSTA PRONTA)
+    // DICA
     // ======================================================
     function showExHint(exId) {
         getAudio();
         const ex = exercises.find(e => e.id === exId);
         if (!ex) return;
-        
         const fb = document.getElementById(exId + '_feedback');
         const a = ex.a;
         const b = ex.b;
         const S = a + b;
         const P = a * b;
-        
-        // Dicas progressivas que orientam sem dar a resposta completa
-        let hint = '';
-        
-        if (S !== 0 && P !== 0) {
-            hint = `💡 Observe os lados do retângulo formado. A expressão expandida é a soma de todas as áreas. Para fatorar, procure dois números que somados dão ${S} e multiplicados dão ${P}.`;
-        } else if (S === 0) {
-            hint = `💡 Quando a soma dos coeficientes é zero, os números são opostos. Multiplique-os para encontrar o termo constante. A forma fatorada será (x + a)(x - a).`;
-        } else if (P === 0) {
-            hint = `💡 Quando o produto é zero, um dos fatores é zero. A expressão pode ser fatorada colocando x em evidência: x(x + ${S}).`;
+
+        // Formata de maneira legível
+        function fmt(val) {
+            if (val === 0) return '';
+            if (val > 0) return '+' + val;
+            return '' + val;
         }
-        
+        const hint = `💡 A figura forma um retângulo de lados (x${fmt(a)}) e (x${fmt(b)}). A área total é x²${fmt(S)}x${fmt(P)}, que fatorada fica (x${fmt(a)})(x${fmt(b)}) ou (x${fmt(b)})(x${fmt(a)}).`;
         fb.className = 'feedback-box show info';
         fb.textContent = hint;
         playClick();
@@ -735,9 +634,6 @@
         const expInput = document.getElementById(exId + '_exp');
         const factInput = document.getElementById(exId + '_fact');
         const fb = document.getElementById(exId + '_feedback');
-        const videoSection = document.getElementById(exId + '_videoSection');
-        const btnVideo = document.getElementById(exId + '_btnVideo');
-        const btnDica = document.getElementById(exId + '_btnDica');
 
         expInput.value = '';
         factInput.value = '';
@@ -745,18 +641,11 @@
         factInput.disabled = false;
         fb.className = 'feedback-box';
         fb.textContent = '';
-        videoSection.classList.remove('show');
 
         if (doneStatus[exId]) {
             doneStatus[exId] = false;
             updateProgress();
         }
-        
-        // Ocultar botões de vídeo e dica ao refazer
-        tentativaRealizada[exId] = false;
-        btnVideo.style.display = 'none';
-        btnDica.style.display = 'none';
-        
         playClick();
     }
 </script>
