@@ -62,6 +62,8 @@
         .btn-skip:hover:not(:disabled) { background: #f57c00; }
         .btn-primary { background: #007b9e; color: #fff; padding: 15px 40px; font-size: 16px; }
         .btn-primary:hover { background: #005f7a; }
+        .btn-solution { background: #00838f; color: #fff; }
+        .btn-solution:hover:not(:disabled) { background: #006064; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .feedback-box { margin-top: 18px; padding: 14px 18px; border-radius: 6px; border-left: 6px solid transparent; display: none; font-weight: 500; background: #f5f8fa; }
@@ -70,12 +72,17 @@
         .feedback-box.error { background: #fbeaea; border-left-color: #c62828; color: #5f1a1a; }
         .feedback-box.info { background: #e3f2fd; border-left-color: #007b9e; color: #0d3a4f; }
         
-        .video-section { margin-top: 20px; padding: 18px; background: #f5f8fa; border-radius: 8px; border: 1px solid #d0d7dd; display: none; }
-        .video-section.show { display: block; }
-        .video-section h3 { font-size: 16px; color: #1c2a36; margin-bottom: 12px; }
+        .video-section, .solution-section { margin-top: 20px; padding: 18px; background: #f5f8fa; border-radius: 8px; border: 1px solid #d0d7dd; display: none; }
+        .video-section.show, .solution-section.show { display: block; }
+        .video-section h3, .solution-section h3 { font-size: 16px; color: #1c2a36; margin-bottom: 12px; }
         .video-container { background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 12px; max-width: 640px; margin-left: auto; margin-right: auto; aspect-ratio: 16 / 9; }
         .video-container video { width: 100%; height: 100%; display: block; object-fit: contain; }
         .video-placeholder { background: #e0e6ed; padding: 30px; border-radius: 8px; color: #5e6f7d; font-size: 14px; text-align: center; }
+        
+        .solution-step { background: #ffffff; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #007b9e; }
+        .solution-step h4 { color: #0b2a41; margin-bottom: 8px; font-size: 15px; }
+        .solution-step .visual { font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; color: #1565c0; margin: 8px 0; }
+        .solution-step .narracao { color: #3d5166; font-size: 14px; line-height: 1.5; }
         
         .navigation { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e6ed; }
         
@@ -132,9 +139,10 @@
                 <strong>🎯 Descritor EF09MA09:</strong> Compreender os processos de fatoração de expressões algébricas, com base em suas relações com os produtos notáveis.
             </div>
             <p><strong>Como funciona:</strong></p>
-            <p>✅ Cada questão aparece uma de cada vez.<br>
-            💡 Se errar na 1ª tentativa, a dica será liberada.<br>
-            🎬 Se errar na 2ª tentativa (ou acertar), o vídeo explicativo será liberado.<br>
+            <p>✅ Cada questão pede DUAS respostas: expressão expandida e forma fatorada.<br>
+            💡 Se errar na 1ª tentativa, exemplos de formatação aparecerão.<br>
+            💡 Se errar na 2ª tentativa, a dica conceitual será liberada.<br>
+            🎬 Se errar na 3ª tentativa (ou acertar), o vídeo e a resolução completa serão liberados.<br>
             ⏭️ Você pode pular questões e voltar depois.</p>
             <button class="btn btn-primary" onclick="iniciarAtividade()" style="margin-top: 30px;">🚀 INICIAR ATIVIDADES</button>
         </div>
@@ -160,7 +168,7 @@
     <!-- TELA FINAL -->
     <div id="screen-final" class="screen">
         <div class="results-box">
-            <h2>🎉 Atividade Concluída!</h2>
+            <h2> Atividade Concluída!</h2>
             <p>Parabéns pelo seu esforço! Aqui está o resumo da sua sessão:</p>
             
             <div class="stats-grid">
@@ -222,7 +230,6 @@
     let statusQuestao = {};
     let acertos = 0, puladas = 0, erros = 0;
 
-    // IDs das 10 questões novas (FILTRO RIGOROSO)
     const IDS_QUESTOES_NOVAS = [
         '00145785-9e2d-40c6-b40e-114c5b1ee7a9',
         '71e35923-cca0-4c9f-8fe8-0674bb0839ff',
@@ -236,7 +243,6 @@
         'dcc6b984-a1f9-419f-a580-3c6b2726957b'
     ];
 
-    // Mapeamento de vídeos
     const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/profrogeriojoaquim-png/fatoracao/main/videos/';
     const VIDEOS_POR_QUESTAO = {
         '00145785-9e2d-40c6-b40e-114c5b1ee7a9': GITHUB_RAW_BASE + 'fatoracao_q1.mp4',
@@ -251,9 +257,6 @@
         'dcc6b984-a1f9-419f-a580-3c6b2726957b': GITHUB_RAW_BASE + 'fatoracao_q10.mp4'
     };
 
-    // ======================================================
-    // SISTEMA DE ÁUDIO
-    // ======================================================
     let audioCtx = null;
     function getAudio() {
         if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
@@ -275,9 +278,6 @@
     function playWrong() { playTone(280, 0.3, 'sawtooth', 0.15); }
     function playClick() { playTone(880, 0.05, 'sine', 0.1); }
 
-    // ======================================================
-    // MODAL PERSONALIZADO (Substitui alert/confirm)
-    // ======================================================
     function showModal(title, msg, onConfirm = null, onCancel = null) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalMessage').textContent = msg;
@@ -302,17 +302,11 @@
         document.getElementById('customModal').classList.remove('show');
     }
 
-    // ======================================================
-    // NAVEGAÇÃO ENTRE TELAS
-    // ======================================================
     function showScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
     }
 
-    // ======================================================
-    // INICIALIZAÇÃO
-    // ======================================================
     async function init() {
         await carregarDadosAluno();
     }
@@ -336,9 +330,6 @@
         }
     }
 
-    // ======================================================
-    // INICIAR ATIVIDADE (COM TRATAMENTO DE ERRO ROBUSTO)
-    // ======================================================
     async function iniciarAtividade() {
         getAudio();
         playClick();
@@ -365,18 +356,16 @@
             }
             
             if (data.length === 0) {
-                showModal('Atenção', 'Nenhuma atividade encontrada no banco de dados para este descritor.');
+                showModal('Atenção', 'Nenhuma atividade encontrada no banco de dados.');
                 return;
             }
 
-            // Embaralhar (Fisher-Yates)
             questoesAtivas = [...data];
             for (let i = questoesAtivas.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [questoesAtivas[i], questoesAtivas[j]] = [questoesAtivas[j], questoesAtivas[i]];
             }
 
-            // Inicializar estados
             questoesAtivas.forEach(q => {
                 tentativasPorQuestao[q.id] = 0;
                 statusQuestao[q.id] = 'pendente';
@@ -397,9 +386,6 @@
         }
     }
 
-    // ======================================================
-    // RENDERIZAÇÃO DA QUESTÃO ATUAL
-    // ======================================================
     function renderizarQuestaoAtual() {
         const q = questoesAtivas[questaoAtual];
         const container = document.getElementById('activity-container');
@@ -411,7 +397,6 @@
         const visual = passo1 ? passo1.visual : '';
         
         let gridHTML = '';
-        // Tenta extrair coeficientes para montar a grade se for trinômio
         if (visual.includes('x²') && visual.includes('x')) {
             const match = visual.match(/x²\s*([+-]\s*\d+)?x\s*([+-]\s*\d+)?/);
             if (match) {
@@ -432,14 +417,19 @@
                 ${gridHTML}
                 <div class="input-group">
                     <div class="input-field">
-                        <label>📝 Sua Resposta:</label>
-                        <input type="text" id="input-${q.id}" placeholder="Digite sua resposta aqui" autocomplete="off">
+                        <label>📝 Expressão expandida:</label>
+                        <input type="text" id="input-exp-${q.id}" placeholder="Digite aqui..." autocomplete="off">
+                    </div>
+                    <div class="input-field">
+                        <label>📝 Forma fatorada:</label>
+                        <input type="text" id="input-fact-${q.id}" placeholder="Digite aqui..." autocomplete="off">
                     </div>
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-success" onclick="verificarResposta('${q.id}')">✅ Verificar</button>
                     <button class="btn btn-warning" id="btn-dica-${q.id}" onclick="mostrarDica('${q.id}')" style="display:none;">💡 Dica</button>
                     <button class="btn btn-video" id="btn-video-${q.id}" onclick="mostrarVideo('${q.id}')" style="display:none;">🎬 Ver Vídeo</button>
+                    <button class="btn btn-solution" id="btn-solution-${q.id}" onclick="mostrarResolucao('${q.id}')" style="display:none;">📖 Ver Resolução</button>
                     <button class="btn btn-skip" id="btn-pular-${q.id}" onclick="solicitarPular('${q.id}')">⏭️ Pular</button>
                 </div>
                 <div id="feedback-${q.id}" class="feedback-box"></div>
@@ -452,6 +442,10 @@
                         </video>
                     </div>
                 </div>
+                <div class="solution-section" id="solution-section-${q.id}">
+                    <h3>📖 Resolução Passo a Passo</h3>
+                    <div id="solution-content-${q.id}"></div>
+                </div>
             </div>
         `;
         
@@ -459,7 +453,6 @@
     }
 
     function construirGrade(S, P, q) {
-        // Extrai os fatores da etapa 5 da resolução para montar a grade corretamente
         const passo5 = q.resolucao_passos.find(p => p.titulo.includes("Forma fatorada"));
         let a = 0, b = 0;
         if (passo5 && passo5.visual) {
@@ -488,47 +481,58 @@
         `;
     }
 
-    // ======================================================
-    // VERIFICAÇÃO
-    // ======================================================
     async function verificarResposta(qId) {
         getAudio();
         const q = questoesAtivas.find(item => item.id === qId);
         if (!q || statusQuestao[qId] === 'acerto' || statusQuestao[qId] === 'pulada') return;
 
-        const inputEl = document.getElementById(`input-${qId}`);
+        const inputExp = document.getElementById(`input-exp-${qId}`);
+        const inputFact = document.getElementById(`input-fact-${qId}`);
         const feedbackEl = document.getElementById(`feedback-${qId}`);
-        const respostaUsuario = inputEl.value.trim();
+        const respExp = inputExp.value.trim();
+        const respFact = inputFact.value.trim();
 
-        if (!respostaUsuario) {
-            showModal('Campo Vazio', 'Por favor, digite uma resposta antes de verificar.');
+        if (!respExp || !respFact) {
+            showModal('Campos Vazios', 'Por favor, preencha AMBOS os campos antes de verificar.');
             return;
         }
 
         tentativasPorQuestao[qId]++;
         
-        const ultimoPasso = q.resolucao_passos[q.resolucao_passos.length - 1];
-        const respostaCorretaVisual = ultimoPasso.visual.replace(/✓/g, '').trim();
+        const passo4 = q.resolucao_passos.find(p => p.titulo.includes("Expressão expandida"));
+        const passo5 = q.resolucao_passos.find(p => p.titulo.includes("Forma fatorada"));
         
-        const respNorm = normalize(respostaUsuario);
-        const corretaNorm = normalize(respostaCorretaVisual);
+        const expCorreta = passo4 ? passo4.visual : '';
+        const factCorreta = passo5 ? passo5.visual : '';
         
-        let estaCorreta = respNorm === corretaNorm;
+        const respExpNorm = normalize(respExp);
+        const respFactNorm = normalize(respFact);
+        const expCorretaNorm = normalize(expCorreta);
+        const factCorretaNorm = normalize(factCorreta);
+        
+        const expOk = respExpNorm === expCorretaNorm;
+        const factOk = respFactNorm === factCorretaNorm;
+        const estaCorreta = expOk && factOk;
 
-        await salvarRespostaBanco(qId, respostaUsuario, estaCorreta);
+        await salvarRespostaBanco(qId, `Exp: ${respExp} | Fact: ${respFact}`, estaCorreta);
 
         if (estaCorreta) {
             statusQuestao[qId] = 'acerto';
             acertos++;
             feedbackEl.className = 'feedback-box show success';
-            feedbackEl.textContent = '✅ Perfeito! Você acertou.';
+            feedbackEl.textContent = '✅ Perfeito! Você acertou ambas as respostas.';
             playCorrect();
-            inputEl.disabled = true;
+            inputExp.disabled = true;
+            inputFact.disabled = true;
             document.getElementById(`btn-pular-${qId}`).style.display = 'none';
             document.getElementById(`btn-dica-${qId}`).style.display = 'none';
             document.getElementById(`btn-video-${qId}`).style.display = 'inline-block';
+            document.getElementById(`btn-solution-${qId}`).style.display = 'inline-block';
             
-            setTimeout(() => mostrarVideo(qId), 1000);
+            setTimeout(() => {
+                mostrarVideo(qId);
+                mostrarResolucao(qId);
+            }, 1000);
             document.getElementById('btn-next').style.display = 'inline-block';
             atualizarProgresso();
         } else {
@@ -536,20 +540,34 @@
             erros++;
             feedbackEl.className = 'feedback-box show error';
             
-            let msgErro = '❌ Resposta incorreta. Tente novamente.';
-            const distrator = encontrarDistrator(q, respNorm);
+            let msgErro = '❌ Resposta incorreta. ';
+            if (!expOk && !factOk) msgErro += 'Ambas as respostas estão erradas.';
+            else if (!expOk) msgErro += 'A expressão expandida está errada.';
+            else msgErro += 'A forma fatorada está errada.';
+            
+            const distrator = encontrarDistrator(q, respFactNorm);
             if (distrator) {
-                msgErro = `❌ ${distrator.diagnostico}\n💡 ${distrator.explicacao}`;
+                msgErro += `\n\n💡 ${distrator.diagnostico}\n${distrator.explicacao}`;
             }
             
             feedbackEl.textContent = msgErro;
             playWrong();
             
+            // Após 1ª tentativa: mostrar exemplos de formatação
             if (tentativasPorQuestao[qId] === 1) {
+                inputExp.placeholder = 'Ex: x^2 + 5x + 6';
+                inputFact.placeholder = 'Ex: (x+2)(x+3)';
+            }
+            
+            // Após 2ª tentativa: liberar dica
+            if (tentativasPorQuestao[qId] === 2) {
                 document.getElementById(`btn-dica-${qId}`).style.display = 'inline-block';
             }
-            if (tentativasPorQuestao[qId] >= 2) {
+            
+            // Após 3ª tentativa: liberar vídeo e resolução
+            if (tentativasPorQuestao[qId] >= 3) {
                 document.getElementById(`btn-video-${qId}`).style.display = 'inline-block';
+                document.getElementById(`btn-solution-${qId}`).style.display = 'inline-block';
             }
         }
     }
@@ -572,9 +590,6 @@
         return str.replace(/\s/g, '').replace(/\*/g, '').replace(/²/g, '^2').replace(/\+-/g, '-').toLowerCase();
     }
 
-    // ======================================================
-    // AÇÕES DO ALUNO
-    // ======================================================
     function mostrarDica(qId) {
         getAudio();
         playClick();
@@ -602,6 +617,29 @@
         }
     }
 
+    function mostrarResolucao(qId) {
+        getAudio();
+        playClick();
+        const q = questoesAtivas.find(item => item.id === qId);
+        const section = document.getElementById(`solution-section-${qId}`);
+        const content = document.getElementById(`solution-content-${qId}`);
+        
+        let html = '';
+        q.resolucao_passos.forEach(passo => {
+            html += `
+                <div class="solution-step">
+                    <h4>Passo ${passo.passo}: ${passo.titulo}</h4>
+                    <div class="visual">${passo.visual}</div>
+                    <div class="narracao">${passo.narracao}</div>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+        section.classList.add('show');
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     function mostrarErroVideo(qId) {
         document.getElementById(`video-container-${qId}`).innerHTML = `
             <div class="video-placeholder">📹 Vídeo indisponível no momento.</div>
@@ -623,13 +661,16 @@
         statusQuestao[qId] = 'pulada';
         puladas++;
         
-        const inputEl = document.getElementById(`input-${qId}`);
+        const inputExp = document.getElementById(`input-exp-${qId}`);
+        const inputFact = document.getElementById(`input-fact-${qId}`);
         const feedbackEl = document.getElementById(`feedback-${qId}`);
         
-        inputEl.disabled = true;
+        inputExp.disabled = true;
+        inputFact.disabled = true;
         document.getElementById(`btn-pular-${qId}`).style.display = 'none';
         document.getElementById(`btn-dica-${qId}`).style.display = 'none';
         document.getElementById(`btn-video-${qId}`).style.display = 'none';
+        document.getElementById(`btn-solution-${qId}`).style.display = 'none';
         
         feedbackEl.className = 'feedback-box show info';
         feedbackEl.textContent = '⏭️ Atividade pulada.';
@@ -666,9 +707,6 @@
         showScreen('screen-final');
     }
 
-    // ======================================================
-    // INTEGRAÇÃO COM BANCO
-    // ======================================================
     async function salvarRespostaBanco(qId, respostaTexto, correta) {
         if (!ALUNO_ID || !JOGO_ID) return;
         
@@ -736,9 +774,6 @@
         document.getElementById('progressFill').style.width = `${pct}%`;
     }
 
-    // ======================================================
-    // INICIAR
-    // ======================================================
     init();
 </script>
 </body>
